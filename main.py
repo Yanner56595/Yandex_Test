@@ -1,34 +1,35 @@
 import sys
+import sqlite3
 
-from PyQt5.QtWidgets import QApplication, QMainWindow
-from ui import Ui_MainWindow
-from PyQt5.QtGui import QPainter, QColor
-from random import randint
+from PyQt5 import uic  # Импортируем uic
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QHeaderView
 
 
-class MyWidget(QMainWindow, Ui_MainWindow):
+class MyWidget(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setupUi(self)
-        self.do_paint = False
-        self.pushButton.clicked.connect(self.paint)
+        uic.loadUi('main.ui', self)  # Загружаем дизайн
+        self.connection = sqlite3.connect("coffee.db")
+        self.query = "SELECT * FROM Coffee"
+        self.select_data()
 
-    def paintEvent(self, event):
-        if self.do_paint:
-            qp = QPainter()
-            qp.begin(self)
-            self.draw_flag(qp)
-            qp.end()
+    def select_data(self):
+        res = self.connection.cursor().execute(self.query).fetchall()
+        # Заполним размеры таблицы
+        self.tableWidget.setColumnCount(7)
+        self.tableWidget.setHorizontalHeaderLabels([
+            'ID', 'Название сорта', 'Степень обжарки',
+            'Молотый/в зернах', 'Описание вкуса', 'Цена', 'Объем упаковки'])
+        self.tableWidget.setRowCount(0)
+        for i, row in enumerate(res):
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+            for j, elem in enumerate(row):
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(elem)))
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tableWidget.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-    def paint(self):
-        self.do_paint = True
-        self.repaint()
-
-    def draw_flag(self, qp):
-        for i in range(randint(1, 15)):
-            qp.setBrush(QColor(randint(0, 255), randint(0, 255), randint(0, 255)))
-            size = randint(50, 500)
-            qp.drawEllipse(randint(0, 1000), randint(0, 700), size, size)
+    def closeEvent(self, event):
+        self.connection.close()
 
 
 if __name__ == '__main__':

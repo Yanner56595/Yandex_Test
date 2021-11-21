@@ -1,14 +1,15 @@
 import sys
 import sqlite3
 
-from PyQt5 import uic  # Импортируем uic
+import addEditCoffeeForm
+import main_window
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QHeaderView
 
 
-class CustomDialog(QMainWindow):
+class CustomDialog(QMainWindow, addEditCoffeeForm.Ui_MainWindow):
     def __init__(self, *args):
         super().__init__()
-        uic.loadUi('addEditCoffeeForm.ui', self)  # Загружаем дизайн
+        self.setupUi(self)
         self.ex = args[1]
         self.con = args[2]
         self.comboBox.addItems(['Молотый', 'В зернах'])
@@ -71,10 +72,10 @@ class CustomDialog(QMainWindow):
         self.ex.select_data()
 
 
-class MyWidget(QMainWindow):
+class MyWidget(QMainWindow, main_window.Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('main.ui', self)  # Загружаем дизайн
+        self.setupUi(self)
         self.connection = sqlite3.connect("coffee.db")
         self.query = "SELECT * FROM Coffee"
         self.select_data()

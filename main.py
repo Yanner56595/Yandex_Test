@@ -5,12 +5,9 @@ def main():
     toponym = input()
     try:
         lat, lon = get_coords(toponym)
-        lat_drug, lon_drug, information = find_store(f'{lat},{lon}')
-        points = f'{lat},{lon},pmwtm1~{lat_drug},{lon_drug},pmwtm2'
+        points_drug = find_store(f'{lat},{lon}')
         type_map = 'map'
-        for elem in information:
-            print(elem, information[elem])
-        show_map(type_map, points)
+        show_map(type_map, points_drug)
     except Exception as e:
         print('Error', e)
 

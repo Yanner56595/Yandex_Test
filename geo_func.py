@@ -1,22 +1,6 @@
 import requests
 from io import BytesIO
 from PIL import Image
-import math
-
-
-def lonlat_distance(a, b):
-    degree_to_meters_factor = 111 * 1000  # 111 километров в метрах
-    a_lon, a_lat = a
-    b_lon, b_lat = b
-    # Берем среднюю по широте точку и считаем коэффициент для нее.
-    radians_lattitude = math.radians((a_lat + b_lat) / 2.)
-    lat_lon_factor = math.cos(radians_lattitude)
-    # Вычисляем смещения в метрах по вертикали и горизонтали.
-    dx = abs(a_lon - b_lon) * degree_to_meters_factor * lat_lon_factor
-    dy = abs(a_lat - b_lat) * degree_to_meters_factor
-    # Вычисляем расстояние между точками.
-    distance = math.sqrt(dx * dx + dy * dy)
-    return distance
 
 
 def get_toponym(toponym_to_find):
@@ -62,17 +46,28 @@ def find_store(address_ll):
 
     if response:
         json_response = response.json()
+        points = ''
         # Получаем первую найденную организацию.
-        organization = json_response["features"][0]
-        # Получаем координаты ответа.
-        point = organization["geometry"]["coordinates"]
-        information = {}
-        information['Название:'] = organization['properties']['CompanyMetaData']['name']
-        information['Адрес:'] = organization['properties']['CompanyMetaData']['address']
-        information['Время работы:'] = organization['properties']['CompanyMetaData']['Hours'][
-            'text']
-        information['Расстояние:'] = f"{int(lonlat_distance(map(float, address_ll.split(',')), point))} метров"
-        return point[0], point[1], information
+        organization = json_response["features"][:10]
+        i = 1
+        for elem in organization:
+            point = elem["geometry"]["coordinates"]
+            if 'Hours' in elem['properties']['CompanyMetaData']:
+                if 'Intervals' in elem['properties']['CompanyMetaData']['Hours']['Availabilities'][0]:
+                    points += f'{point[0]},{point[1]},pm2blm{i}'
+                    if i != 10:
+                        points += '~'
+                else:
+                    if elem['properties']['CompanyMetaData']['Hours']['Availabilities'][0]['TwentyFourHours']:
+                        points += f'{point[0]},{point[1]},pm2gnm{i}'
+                        if i != 10:
+                            points += '~'
+            else:
+                points += f'{point[0]},{point[1]},pm2grm{i}'
+                if i != 10:
+                    points += '~'
+            i += 1
+        return points
 
 
 def show_map(type_map, point):
